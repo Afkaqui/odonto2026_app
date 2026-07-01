@@ -16,10 +16,13 @@ Las claves se inyectan al compilar con `--dart-define`:
 ## Compilar el APK
 ```bash
 flutter pub get
-flutter build apk --release \
-  --dart-define=API_BASE=https://pulsera.lucyscan.com \
-  --dart-define=API_KEY=TU_API_KEY \
-  --dart-define=GEMINI_KEY=TU_GEMINI_KEY
+
+# Recomendado: copia env.example.json a env.json (gitignored) y completa las claves,
+# luego compila corto:
+flutter build apk --release --dart-define-from-file=env.json
+
+# Alternativa sin archivo (mínimo — API_BASE ya tiene default y GEMINI_KEY es opcional):
+# flutter build apk --release --dart-define=API_KEY=TU_API_KEY
 ```
 APK en `build/app/outputs/flutter-apk/app-release.apk`.
 
