@@ -119,27 +119,6 @@ class ApiService {
     return Map<String, dynamic>.from(_decode(r)['consultation']);
   }
 
-  // ---------------- Records (momentos clave) ----------------
-  static Future<Map<String, dynamic>> createRecord({
-    required int consultationId,
-    double? ppg,
-    String? bpmRaw,
-    String? source,
-    String? deviceTime,
-    required String phase, // m1..m6
-    required String status, // a1..a5
-  }) async {
-    final r = await http.post(_u('/api/records'),
-        headers: _headers,
-        body: jsonEncode({
-          'consultation_id': consultationId,
-          'ppg': ppg,
-          'bpm_raw': bpmRaw,
-          'source': source,
-          'device_time': deviceTime,
-          'phase': phase,
-          'status': status,
-        }));
-    return Map<String, dynamic>.from(_decode(r)['record']);
-  }
+  // Nota: el envío de records va por syncConsultation (offline-first), no hay
+  // createRecord directo.
 }

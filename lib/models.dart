@@ -8,8 +8,9 @@ class LocalRecord {
   final String? bpmRaw;
   final String? source;
   final String? deviceTime;
-  final String phase;  // m1..m6
-  final String status; // a1..a5
+  final int phaseNum;       // numero de momento (contador: 1,2,3...)
+  final String phaseLabel;  // etiqueta editable (tamizaje, limpieza, ...)
+  final String status;      // a1..a5 (nivel de ansiedad, a1 menor .. a5 mayor)
 
   LocalRecord({
     required this.capturedAt,
@@ -17,7 +18,8 @@ class LocalRecord {
     this.bpmRaw,
     this.source,
     this.deviceTime,
-    required this.phase,
+    required this.phaseNum,
+    required this.phaseLabel,
     required this.status,
   });
 
@@ -27,7 +29,8 @@ class LocalRecord {
         'bpm_raw': bpmRaw,
         'source': source,
         'device_time': deviceTime,
-        'phase': phase,
+        'phase_num': phaseNum,
+        'phase_label': phaseLabel,
         'status': status,
       };
 
@@ -37,7 +40,8 @@ class LocalRecord {
         bpmRaw: j['bpm_raw'] as String?,
         source: j['source'] as String?,
         deviceTime: j['device_time'] as String?,
-        phase: j['phase'] as String,
+        phaseNum: (j['phase_num'] as num?)?.toInt() ?? 0,
+        phaseLabel: j['phase_label'] as String? ?? '',
         status: j['status'] as String,
       );
 }

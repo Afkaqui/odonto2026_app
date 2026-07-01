@@ -30,9 +30,18 @@ class _MonitorScreenState extends State<MonitorScreen> {
   StreamSubscription? _scanSubscription;
   StreamSubscription? _valueSubscription;
 
-  String _phase = 'm1';
+  final _momento = TextEditingController(); // etiqueta editable del momento
   String _estado = 'a3';
   bool _terminada = false;
+
+  // Ansiedad: a1 (menor) .. a5 (mayor).
+  static const Map<String, String> anxLabels = {
+    'a1': 'Muy baja', 'a2': 'Baja', 'a3': 'Media', 'a4': 'Alta', 'a5': 'Muy alta',
+  };
+  // Sugerencias comunes de momento (el odontólogo puede escribir cualquiera).
+  static const List<String> momentoSugerencias = [
+    'Tamizaje', 'Limpieza', 'Anestesia', 'Procedimiento', 'Post-atención',
+  ];
 
   // Modo simulado: genera PPG aleatorio sin necesidad de pulsera (para pruebas).
   // Funciona igual offline u online (los records se guardan local y sincronizan).
@@ -52,6 +61,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
 
   @override
   void dispose() {
+    _momento.dispose();
     _simTimer?.cancel();
     _scanSubscription?.cancel();
     _valueSubscription?.cancel();
@@ -152,18 +162,22 @@ class _MonitorScreenState extends State<MonitorScreen> {
       ppg = double.tryParse(crudo.trim());
     }
 
+    final num = widget.consultation.records.length + 1;      // contador de momento
+    final label = _momento.text.trim().isEmpty ? 'Momento $num' : _momento.text.trim();
+
     widget.consultation.records.add(LocalRecord(
       capturedAt: DateTime.now().toIso8601String(),
       ppg: ppg,
       bpmRaw: crudo,
       source: fuente,
       deviceTime: horaDisp,
-      phase: _phase,
+      phaseNum: num,
+      phaseLabel: label,
       status: _estado,
     ));
     await LocalStore.instance.touch();
     setState(() {});
-    _msg('✅ Momento guardado ($_phase / $_estado) — local');
+    _msg('✅ Momento #$num "$label" · ansiedad ${anxLabels[_estado]} — guardado');
   }
 
   Future<void> _terminar() async {
@@ -231,21 +245,38 @@ class _MonitorScreenState extends State<MonitorScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: DropdownButtonFormField<String>(
-              value: _phase,
-              decoration: const InputDecoration(labelText: 'Momento (fase)', border: OutlineInputBorder()),
-              items: const ['m1','m2','m3','m4','m5','m6'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-              onChanged: (v) => setState(() => _phase = v ?? 'm1'),
-            )),
-            const SizedBox(width: 12),
-            Expanded(child: DropdownButtonFormField<String>(
-              value: _estado,
-              decoration: const InputDecoration(labelText: 'Estado (ansiedad)', border: OutlineInputBorder()),
-              items: const ['a1','a2','a3','a4','a5'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-              onChanged: (v) => setState(() => _estado = v ?? 'a3'),
-            )),
-          ]),
+          // --- Momento: contador automático + etiqueta editable ---
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Momento #${widget.consultation.records.length + 1}',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _momento,
+            decoration: const InputDecoration(
+              labelText: 'Nombre del momento (ej. Tamizaje, Limpieza...)',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            children: momentoSugerencias.map((s) => ActionChip(
+              label: Text(s),
+              onPressed: () => setState(() => _momento.text = s),
+            )).toList(),
+          ),
+          const SizedBox(height: 14),
+          // --- Nivel de ansiedad (a1 menor .. a5 mayor) con etiquetas ---
+          DropdownButtonFormField<String>(
+            value: _estado,
+            decoration: const InputDecoration(labelText: 'Nivel de ansiedad', border: OutlineInputBorder()),
+            items: anxLabels.entries
+                .map((e) => DropdownMenuItem(value: e.key, child: Text('${e.key.toUpperCase()} · ${e.value}')))
+                .toList(),
+            onChanged: (v) => setState(() => _estado = v ?? 'a3'),
+          ),
           const SizedBox(height: 20),
           SizedBox(width: double.infinity, child: ElevatedButton(onPressed: startScanAndConnect, child: const Text("BUSCAR PULSERA"))),
           const SizedBox(height: 10),
