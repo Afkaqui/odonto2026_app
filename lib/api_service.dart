@@ -63,14 +63,20 @@ class ApiService {
   }
 
   // ---------------- Pacientes ----------------
-  static Future<List<dynamic>> listPatients() async {
-    final r = await http.get(_u('/api/patients'), headers: _headers);
+  // Lista (o busca con q) pacientes reutilizables del backend.
+  static Future<List<dynamic>> listPatients({String? q}) async {
+    final path = (q != null && q.trim().isNotEmpty)
+        ? '/api/patients?q=${Uri.encodeQueryComponent(q.trim())}'
+        : '/api/patients';
+    final r = await http.get(_u(path), headers: _headers);
     return _decode(r)['patients'] as List<dynamic>;
   }
 
-  static Future<Map<String, dynamic>> createPatient(String code, int? age, String? gender) async {
+  static Future<Map<String, dynamic>> createPatient(
+      String code, int? age, String? gender, {String? name}) async {
     final r = await http.post(_u('/api/patients'),
-        headers: _headers, body: jsonEncode({'code': code, 'age': age, 'gender': gender}));
+        headers: _headers,
+        body: jsonEncode({'code': code, 'age': age, 'gender': gender, 'name': name}));
     return Map<String, dynamic>.from(_decode(r)['patient']);
   }
 

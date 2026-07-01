@@ -50,6 +50,7 @@ class LocalConsultation {
   final String? patientCode;
   final int? patientAge;
   final String? patientGender;
+  final String? patientName;
   final String? braceletCode;
   final String startedAt; // ISO8601
   String? endedAt;        // ISO8601 (null = en curso)
@@ -64,6 +65,7 @@ class LocalConsultation {
     this.patientCode,
     this.patientAge,
     this.patientGender,
+    this.patientName,
     this.braceletCode,
     required this.startedAt,
     this.endedAt,
@@ -77,7 +79,7 @@ class LocalConsultation {
         'started_at': startedAt,
         'ended_at': endedAt,
         'doctor': {'username': doctorUsername},
-        'patient': {'code': patientCode, 'age': patientAge, 'gender': patientGender},
+        'patient': {'code': patientCode, 'age': patientAge, 'gender': patientGender, 'name': patientName},
         'bracelet': {'code': braceletCode},
         'records': records.map((r) => r.toJson()).toList(),
       };
@@ -90,6 +92,7 @@ class LocalConsultation {
         'patient_code': patientCode,
         'patient_age': patientAge,
         'patient_gender': patientGender,
+        'patient_name': patientName,
         'bracelet_code': braceletCode,
         'started_at': startedAt,
         'ended_at': endedAt,
@@ -105,6 +108,7 @@ class LocalConsultation {
         patientCode: j['patient_code'] as String?,
         patientAge: j['patient_age'] as int?,
         patientGender: j['patient_gender'] as String?,
+        patientName: j['patient_name'] as String?,
         braceletCode: j['bracelet_code'] as String?,
         startedAt: j['started_at'] as String,
         endedAt: j['ended_at'] as String?,
