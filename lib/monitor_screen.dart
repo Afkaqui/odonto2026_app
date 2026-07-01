@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'models.dart';
@@ -33,6 +34,12 @@ class _MonitorScreenState extends State<MonitorScreen> {
   String _estado = 'a3';
   bool _terminada = false;
 
+  // Modo simulado: genera PPG aleatorio sin necesidad de pulsera (para pruebas).
+  // Funciona igual offline u online (los records se guardan local y sincronizan).
+  bool _simulado = false;
+  Timer? _simTimer;
+  final Random _rng = Random();
+
   @override
   void initState() {
     super.initState();
@@ -45,10 +52,35 @@ class _MonitorScreenState extends State<MonitorScreen> {
 
   @override
   void dispose() {
+    _simTimer?.cancel();
     _scanSubscription?.cancel();
     _valueSubscription?.cancel();
     connectedDevice?.disconnect();
     super.dispose();
+  }
+
+  // Activa/desactiva la generación de datos aleatorios.
+  void _setSimulado(bool v) {
+    setState(() => _simulado = v);
+    _simTimer?.cancel();
+    if (v) {
+      _status = "Simulando (sin pulsera)";
+      _simTimer = Timer.periodic(const Duration(seconds: 1), (_) => _tickSim());
+    } else {
+      _heartRateData = [];
+      _status = connectedDevice != null ? "Monitoreando..." : "Desconectado";
+    }
+    setState(() {});
+  }
+
+  // Genera una lectura aleatoria con el mismo formato del ESP: "HH:MM:SS,BPM,SIM".
+  void _tickSim() {
+    final now = DateTime.now();
+    String d2(int n) => n.toString().padLeft(2, '0');
+    final hora = "${d2(now.hour)}:${d2(now.minute)}:${d2(now.second)}";
+    final bpm = 60 + _rng.nextInt(51); // 60..110
+    final payload = "$hora,$bpm,SIM";
+    setState(() => _heartRateData = payload.codeUnits);
   }
 
   void startScanAndConnect() async {
@@ -172,7 +204,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(children: [
-          Icon(Icons.monitor_heart, size: 80, color: _status.contains("Monitoreando") ? Colors.redAccent : Colors.grey),
+          Icon(Icons.monitor_heart, size: 80, color: (_status.contains("Monitoreando") || _simulado) ? Colors.redAccent : Colors.grey),
           Text("Estado: $_status", textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54)),
           const SizedBox(height: 16),
           Container(
@@ -184,7 +216,21 @@ class _MonitorScreenState extends State<MonitorScreen> {
               Text(bpm, style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
             ]),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: _simulado ? Colors.amber.shade100 : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: SwitchListTile(
+              value: _simulado,
+              onChanged: _terminada ? null : _setSimulado,
+              secondary: Icon(Icons.science, color: _simulado ? Colors.amber.shade800 : Colors.grey),
+              title: const Text('Modo simulado'),
+              subtitle: const Text('Genera PPG aleatorio (sin pulsera)'),
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(children: [
             Expanded(child: DropdownButtonFormField<String>(
               value: _phase,
