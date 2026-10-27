@@ -1,30 +1,49 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+// Pruebas del modelo de datos local (offline-first).
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:test_base/main.dart';
+import 'package:test_base/models.dart';
+import 'package:test_base/util.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('LocalConsultation se serializa y deserializa sin perder datos', () {
+    final c = LocalConsultation(
+      clientUuid: genClientUuid(),
+      patientCode: 'PAC-1',
+      patientName: 'Ana',
+      startedAt: '2026-07-01T10:00:00Z',
+      records: [
+        LocalRecord(
+          capturedAt: '2026-07-01T10:01:00Z',
+          ppg: 80,
+          phaseNum: 1,
+          phaseLabel: 'Tamizaje',
+          status: 'a2',
+          source: 'SIM',
+        ),
+      ],
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final copia = LocalConsultation.fromJson(c.toJson());
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(copia.clientUuid, c.clientUuid);
+    expect(copia.patientName, 'Ana');
+    expect(copia.records.single.phaseNum, 1);
+    expect(copia.records.single.phaseLabel, 'Tamizaje');
+    expect(copia.synced, isFalse);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('El payload de sync envía phase_num, phase_label y status', () {
+    final c = LocalConsultation(
+      clientUuid: 'c-x',
+      startedAt: '2026-07-01T10:00:00Z',
+      records: [
+        LocalRecord(capturedAt: 't', phaseNum: 2, phaseLabel: 'Limpieza', status: 'a5'),
+      ],
+    );
+
+    final rec = (c.toSyncJson()['records'] as List).single as Map;
+
+    expect(rec['phase_num'], 2);
+    expect(rec['phase_label'], 'Limpieza');
+    expect(rec['status'], 'a5');
   });
 }

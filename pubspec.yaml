@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ^3.8.1
@@ -30,21 +30,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
-  flutter_blue_plus: ^2.0.2
-  permission_handler: ^12.0.1
-  shared_preferences: ^2.3.2   # almacenamiento local (modo offline-first)
-  # Firebase eliminado: el envio ahora va al backend propio (PostgreSQL via API REST).
-  # firebase_core: ^4.2.1
-  # cloud_firestore: ^6.1.0
-  google_generative_ai: ^0.4.7
-  flutter_markdown: ^0.7.7+1
-  dash_chat_2: ^0.0.21
-  googleapis: ^15.0.0
-  http: ^1.6.0
+  flutter_blue_plus: ^2.0.2       # BLE con la pulsera
+  shared_preferences: ^2.3.2      # almacenamiento local (modo offline-first)
+  http: ^1.6.0                    # API del backend
+  google_generative_ai: ^0.4.7    # asistente IA (chatbot)
+  dash_chat_2: ^0.0.21            # UI del chatbot
 
 dev_dependencies:
   flutter_test:
